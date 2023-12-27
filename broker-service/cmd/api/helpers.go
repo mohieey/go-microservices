@@ -13,20 +13,20 @@ type jsonResponse struct {
 	Data    any    `json:"data,omitempty"`
 }
 
-func (cfg *Config) readJson(w http.ResponseWriter, r *http.Request, data any) error {
+func (cfg *Config) readJSON(w http.ResponseWriter, r *http.Request, data any) error {
 	maxBytes := 1048576
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(r.Body)
+	err := dec.Decode(data)
 	if err != nil {
 		return err
 	}
 
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
-		return errors.New("only on json allowed in request body")
+		return errors.New("only one json value allowed")
 	}
 
 	return nil
