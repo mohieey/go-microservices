@@ -10,8 +10,7 @@
 			"path": "project"
 		},
 		{
-			"name": "go-microservices",
-			"path": "."
+			"path": "logger-service"
 		}
 	],
 	"settings": {}

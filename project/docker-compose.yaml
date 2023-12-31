@@ -61,7 +61,7 @@ services:
       replicas: 1
     environment:
       MONGO_INITDB_DATABASE: logs
-      MONGO_INITDB_ROOT_USER: mongo
-      MONGO_INITDB_ROOT_password: password
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - ./db-data/mongo/:/data/db
