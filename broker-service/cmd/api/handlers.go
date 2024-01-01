@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -11,6 +12,7 @@ type RequestPayload struct {
 	Action string      `json:"action"`
 	Auth   AuthPayload `json:"auth,omitempty"`
 	Log    LogPayload  `json:"log,omitempty"`
+	Mail   MailPayload `json:"mail,omitempty"`
 }
 
 type AuthPayload struct {
@@ -21,6 +23,13 @@ type AuthPayload struct {
 type LogPayload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
+}
+
+type MailPayload struct {
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Message string `json:"message"`
 }
 
 func (cfg *Config) Broker(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +56,8 @@ func (cfg *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 		cfg.authenticate(w, requestPayload.Auth)
 	case "log":
 		cfg.logItem(w, requestPayload.Log)
+	case "mail":
+		cfg.sendMail(w, requestPayload.Mail)
 	default:
 		cfg.errorJSON(w, errors.New("unknown action"))
 	}
@@ -123,6 +134,37 @@ func (cfg *Config) logItem(w http.ResponseWriter, log LogPayload) {
 	var payload jsonResponse
 	payload.Error = false
 	payload.Message = "logged successfully"
+
+	cfg.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (cfg *Config) sendMail(w http.ResponseWriter, mail MailPayload) {
+	jsonData, _ := json.MarshalIndent(mail, "", "\t")
+
+	request, err := http.NewRequest(http.MethodPost, "http://mail-service/send", bytes.NewBuffer(jsonData))
+	if err != nil {
+		cfg.errorJSON(w, err)
+		return
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		cfg.errorJSON(w, err)
+		return
+	}
+	defer response.Body.Close()
+
+	fmt.Println(response.StatusCode)
+
+	if response.StatusCode != http.StatusAccepted {
+		cfg.errorJSON(w, errors.New("error calling mail service"))
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = false
+	payload.Message = "sent successfully to " + mail.To
 
 	cfg.writeJSON(w, http.StatusAccepted, payload)
 }
