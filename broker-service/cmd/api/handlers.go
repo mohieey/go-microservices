@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/rpc"
 )
 
 type RequestPayload struct {
@@ -56,7 +57,7 @@ func (cfg *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		cfg.authenticate(w, requestPayload.Auth)
 	case "log":
-		cfg.logEventViaRabbit(w, requestPayload.Log)
+		cfg.logItemViaRPC(w, requestPayload.Log)
 	case "mail":
 		cfg.sendMail(w, requestPayload.Mail)
 	default:
@@ -135,6 +136,35 @@ func (cfg *Config) logItem(w http.ResponseWriter, log LogPayload) {
 	var payload jsonResponse
 	payload.Error = false
 	payload.Message = "logged successfully"
+
+	cfg.writeJSON(w, http.StatusAccepted, payload)
+}
+
+type RPCPayload struct {
+	Name string
+	Data string
+}
+
+func (cfg *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
+	client, err := rpc.Dial("tcp", "logger-service:5001")
+	if err != nil {
+		cfg.errorJSON(w, err)
+		return
+	}
+
+	rpcPayload := RPCPayload(l)
+
+	var result string
+	err = client.Call("RPCServer.LogInfo", rpcPayload, &result)
+	if err != nil {
+		cfg.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: result,
+	}
 
 	cfg.writeJSON(w, http.StatusAccepted, payload)
 }
