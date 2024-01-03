@@ -54,6 +54,17 @@ services:
       FROM_NAME: "Leo Messi"
       FROM_ADDRESS: leo@fcb.com
 
+  listener-service:
+    depends_on:
+      - rabbitmq
+    build:
+      context: ./../listener-service
+      dockerfile: ./../listener-service/listener-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+
   postgres:
     image: "postgres"
     ports:
@@ -87,5 +98,16 @@ services:
   mailhog:
     image: "mailhog/mailhog"
     ports:
-      - "1025:1025"
       - "8025:8025"
+
+  rabbitmq:
+    image: "rabbitmq:management-alpine"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - ./db-data/rabbitmq/:/var/lib/rabbitmq/

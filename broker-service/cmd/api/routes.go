@@ -6,9 +6,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Config struct {
+	RabbitMQ *amqp.Connection
 }
 
 func (cfg *Config) routes() http.Handler {
