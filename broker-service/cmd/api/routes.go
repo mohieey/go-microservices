@@ -30,6 +30,8 @@ func (cfg *Config) routes() http.Handler {
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Post("/handle", cfg.HandleSubmission)
 
+	mux.Post("/log-grpc", cfg.LogViaGRPC)
+
 	mux.Post("/", cfg.Broker)
 
 	return mux

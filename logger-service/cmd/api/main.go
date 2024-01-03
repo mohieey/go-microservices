@@ -44,6 +44,8 @@ func main() {
 		Models: *data.New(client),
 	}
 
+	go app.gRPCListen()
+
 	rpc.Register(new(RPCServer))
 	go app.rpcListen()
 	app.Serve()
